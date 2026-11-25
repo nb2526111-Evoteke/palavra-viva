@@ -14,7 +14,8 @@ dist/
 .env.*
 !.env.example
 
-# Credenciais geradas no Codespace
+# Credenciais locais
+CREDENCIAIS-ADMIN.txt
 CREDENCIAIS-CODESPACE.txt
 
 # Backups locais

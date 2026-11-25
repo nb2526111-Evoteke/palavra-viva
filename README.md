@@ -5,6 +5,8 @@
 Blog bíblico completo com Bíblia em português, biblioteca digital, planos de leitura,
 geradores de estudos e um painel administrativo privado.
 
+**Site, portfólio e prévia do blog:** https://nb2526111-evoteke.github.io/
+
 [![Next.js](https://img.shields.io/badge/Next.js-16.4-000000?logo=nextdotjs)](https://nextjs.org)
 [![React](https://img.shields.io/badge/React-19-61DAFB?logo=react&logoColor=000)](https://react.dev)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.9-3178C6?logo=typescript&logoColor=fff)](https://www.typescriptlang.org)
