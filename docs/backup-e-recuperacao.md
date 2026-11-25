@@ -2,23 +2,23 @@
 
 ## O que precisa de backup
 
-| Item | Local | Vercel |
-| --- | --- | --- |
-| Banco | `data/app.db` | Turso |
-| Uploads | `data/uploads/` | Vercel Blob |
-| Configuração | `.env` | Environment Variables |
-| Imagens fixas | `public/images/` | Git |
-| Código | Git | GitHub |
+| Item | Caminho |
+| --- | --- |
+| Banco | `data/app.db` (+ `-wal`/`-shm` se existirem) |
+| Uploads | `data/uploads/` |
+| Configuração | `.env` |
+| Imagens fixas | `public/images/` (também versionadas no Git) |
+| Código | Git/GitHub |
 
-## Banco local (SQLite)
+## Banco
 
-Com o servidor parado, copie:
+Com o servidor parado:
 
 ```powershell
 Copy-Item data\app.db backups\app-$(Get-Date -Format yyyyMMdd-HHmm).db
 ```
 
-Ou use o backup consistente do SQLite:
+Ou com backup consistente:
 
 ```bash
 sqlite3 data/app.db ".backup 'backups/app-2026-11-24.db'"
@@ -26,64 +26,36 @@ sqlite3 data/app.db ".backup 'backups/app-2026-11-24.db'"
 
 Inclua `app.db-wal` e `app.db-shm` apenas se existirem e o servidor estiver parado.
 
-## Banco no Turso
-
-Opções:
-
-1. **Painel do Turso:** exportar/dump do banco.
-2. **Point-in-time restore:** o plano Free mantém 1 dia de restauração.
-3. **CLI do Turso** (quando instalado):
-   ```bash
-   turso db export palavra-viva backups/palavra-viva-2026-11-24.db
-   ```
-
-Guarde o arquivo fora do provedor.
-
 ## Uploads
-
-### Local
 
 ```bash
 tar -czf backups/uploads-2026-11-24.tar.gz -C data uploads
 ```
 
-### Vercel Blob
+No Windows:
 
-- Use o painel da Vercel para baixar/exportar o store.
-- Ou mantenha uma cópia dos arquivos originais em outro storage.
+```powershell
+Compress-Archive -Path data\uploads\* -DestinationPath backups\uploads-$(Get-Date -Format yyyyMMdd).zip
+```
 
 ## Configuração
 
 Guarde o `.env` em um gerenciador de senhas. Ele contém:
 
 - senha do administrador;
-- `SESSION_SECRET`;
-- URL e token do Turso.
+- `SESSION_SECRET`.
 
 Não guarde o `.env` no Git.
 
-## Restaurar SQLite
+## Restaurar
 
 1. Pare o site.
-2. Guarde o banco atual.
+2. Guarde o estado atual (se possível).
 3. Copie o backup para `data/app.db`.
 4. Remova `data/app.db-wal` e `data/app.db-shm` antigos.
-5. Inicie o site e teste login, artigos e Bíblia.
-
-## Restaurar Turso
-
-1. Crie um banco novo ou limpe o atual.
-2. Importe o dump pelo painel/CLI.
-3. Atualize `TURSO_DATABASE_URL`/`TURSO_AUTH_TOKEN` se o banco mudou.
-4. Faça novo deploy na Vercel.
-5. Teste login, artigos e Bíblia.
-
-## Restaurar uploads
-
-1. Recrie a pasta `data/uploads` (local) ou o Blob store (Vercel).
-2. Copie os arquivos.
-3. Confira se os nomes batem com a tabela `media`.
-4. Teste `/uploads/...`.
+5. Restaure `data/uploads`.
+6. Restaure o `.env` se necessário.
+7. Inicie o site e teste.
 
 ## Frequência recomendada
 

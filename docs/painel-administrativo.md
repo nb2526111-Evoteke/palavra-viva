@@ -95,8 +95,7 @@ Permite adicionar, editar e excluir versículos da rotação.
 ## Mídia
 
 - Upload de imagens, PDF, MP3, M4A, OGG e MP4.
-- No SQLite local: até 8 MB por arquivo.
-- Na Vercel: até 4,5 MB por envio (limite da função).
+- Até 8 MB por arquivo, em `data/uploads`.
 - Texto alternativo editável.
 - Botão **Copiar** para usar a URL no editor ou na biblioteca.
 

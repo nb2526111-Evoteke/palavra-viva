@@ -1,12 +1,11 @@
 import { loadEnv } from "./lib/env";
-import { execute, insert, queryOne, setupRemoteSchema } from "../src/lib/db";
+import { getDb } from "../src/lib/db";
 import { hashPassword } from "../src/lib/password";
 
 loadEnv();
 
-async function main() {
-  await setupRemoteSchema();
-
+try {
+  const db = getDb();
   const email = (process.env.ADMIN_EMAIL || "").trim().toLowerCase();
   const password = process.env.ADMIN_PASSWORD || "";
   const name = (process.env.ADMIN_NAME || "Administrador").trim();
@@ -25,30 +24,27 @@ async function main() {
     process.exit(1);
   }
 
-  const existing = await queryOne<{ id: number }>(
-    "SELECT id FROM users WHERE email = ? COLLATE NOCASE LIMIT 1",
-    [email],
-  );
+  const existing = db.prepare("SELECT id FROM users WHERE email = ? COLLATE NOCASE LIMIT 1").get(email) as
+    | { id: number }
+    | undefined;
 
   const fallbackAdmin = existing
     ? null
-    : await queryOne<{ id: number }>("SELECT id FROM users WHERE role = 'admin' ORDER BY id LIMIT 1");
+    : (db.prepare("SELECT id FROM users WHERE role = 'admin' ORDER BY id LIMIT 1").get() as
+        | { id: number }
+        | undefined);
 
   const hash = hashPassword(password);
 
   if (existing || fallbackAdmin) {
     const userId = existing?.id ?? fallbackAdmin!.id;
-    await execute("UPDATE users SET name = ?, email = ?, password_hash = ?, role = 'admin' WHERE id = ?", [
-      name,
-      email,
-      hash,
-      userId,
-    ]);
-    await execute("DELETE FROM sessions WHERE user_id = ?", [userId]);
-    await execute(
+    db.prepare(
+      "UPDATE users SET name = ?, email = ?, password_hash = ?, role = 'admin' WHERE id = ?",
+    ).run(name, email, hash, userId);
+    db.prepare("DELETE FROM sessions WHERE user_id = ?").run(userId);
+    db.prepare(
       "INSERT INTO audit_logs (user_id, action, entity, details) VALUES (?, 'admin.reset', 'user', 'Credenciais redefinidas pelo script')",
-      [userId],
-    );
+    ).run(userId);
     console.log("");
     console.log("  Credenciais do administrador redefinidas.");
     console.log(`  E-mail: ${email}`);
@@ -56,27 +52,23 @@ async function main() {
     console.log("  Sessões antigas encerradas.");
     console.log("");
   } else {
-    const id = await insert("INSERT INTO users (name, email, password_hash, role) VALUES (?, ?, ?, 'admin')", [
-      name,
-      email,
-      hash,
-    ]);
-    await execute(
+    const result = db
+      .prepare("INSERT INTO users (name, email, password_hash, role) VALUES (?, ?, ?, 'admin')")
+      .run(name, email, hash);
+    const id = Number(result.lastInsertRowid);
+    db.prepare(
       "INSERT INTO audit_logs (user_id, action, entity, entity_id, details) VALUES (?, 'admin.create', 'user', ?, 'Administrador criado pelo script')",
-      [id, String(id)],
-    );
+    ).run(id, String(id));
     console.log("");
     console.log("  Novo administrador criado.");
     console.log(`  E-mail: ${email}`);
     console.log("  Senha:  a definida em ADMIN_PASSWORD no .env");
     console.log("");
   }
-}
-
-main().catch((error) => {
+} catch (error) {
   console.error("");
   console.error("  Falha ao redefinir o administrador.");
   console.error(`  ${error instanceof Error ? error.message : String(error)}`);
   console.error("");
   process.exitCode = 1;
-});
+}

@@ -51,6 +51,6 @@ Fazem parte do escopo:
 
 1. Troque imediatamente a senha do administrador.
 2. Gere um novo `SESSION_SECRET` e reinicie o site (invalida sessões).
-3. Gere um novo token no Turso e atualize a Vercel.
-4. Revise os logs de auditoria no painel.
+3. Revise os logs de auditoria no painel.
+4. Se o banco ou uploads foram acessados, restaure um backup confiável.
 5. Se o repositório for público, remova o segredo do histórico e considere o valor comprometido.

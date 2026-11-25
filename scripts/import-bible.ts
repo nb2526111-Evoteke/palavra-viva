@@ -3,8 +3,8 @@ import { importBible } from "./lib/import-bible";
 
 loadEnv();
 
-async function main() {
-  const result = await importBible({ force: true });
+try {
+  const result = importBible({ force: true });
   console.log("");
   console.log("  Bíblia importada com sucesso.");
   console.log(`  Livros:     ${result.books}`);
@@ -13,12 +13,10 @@ async function main() {
   console.log("");
   console.log("  Abra /biblia no site para conferir.");
   console.log("");
-}
-
-main().catch((error) => {
+} catch (error) {
   console.error("");
   console.error("  Não foi possível importar a Bíblia.");
   console.error(`  ${error instanceof Error ? error.message : String(error)}`);
   console.error("");
   process.exitCode = 1;
-});
+}

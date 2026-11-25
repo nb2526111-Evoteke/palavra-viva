@@ -33,8 +33,6 @@ distribuídas sob a **SIL Open Font License 1.1**.
 - Next.js — MIT
 - React — MIT
 - Tailwind CSS — MIT
-- libSQL Client — MIT
-- Vercel Blob SDK — Apache-2.0
 - marked — MIT
 - sanitize-html — MIT
 - Zod — MIT

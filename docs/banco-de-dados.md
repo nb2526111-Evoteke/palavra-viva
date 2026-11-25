@@ -2,14 +2,16 @@
 
 ## Tecnologia
 
-O projeto usa **SQLite** em desenvolvimento e **libSQL/Turso** em produção.
-O acesso é feito por `@libsql/client`, com as mesmas consultas SQL nos dois ambientes.
+O projeto usa **SQLite** via `node:sqlite`, incluído no Node.js 22.13+.
+O banco é um arquivo local em `data/app.db`.
 
-- Banco local: `data/app.db`
-- Banco remoto: `TURSO_DATABASE_URL` + `TURSO_AUTH_TOKEN`
 - Schema: `src/lib/schema.ts`
 - Acesso: `src/lib/db.ts`
 - Consultas: `src/lib/queries.ts`
+- Seed: `src/lib/seed.ts`
+- Fonte da Bíblia: `data/source/almeida-livre.sqlite`
+
+Não há banco externo, ORM ou serviço de nuvem.
 
 ## Tabelas
 
@@ -68,7 +70,7 @@ generated_themes 1 ── N daily_messages
 bible_books 1 ── N bible_verses
 ```
 
-## Inicialização local
+## Inicialização
 
 ```bash
 npm run db:setup
@@ -83,30 +85,14 @@ O comando:
 
 O processo é idempotente: se `settings.seeded = 1`, não duplica o conteúdo.
 
-## Turso
-
-1. Crie o banco no Turso.
-2. Salve `.env.turso` com `TURSO_DATABASE_URL` e `TURSO_AUTH_TOKEN`.
-3. Rode:
-
-```bash
-npm run db:migrate
-```
-
-O script cria o schema, copia todas as tabelas (exceto `sessions`) e confere as contagens.
-Use `FORCE_MIGRATION=1` para apagar e recriar o banco remoto.
-
-> Em produção serverless, prefira a URL `https://...` em vez de `libsql://...`.
-
 ## Reimportar a Bíblia
 
 ```bash
 npm run bible:import
 ```
 
-O importador lê `data/source/almeida-livre.sqlite` e grava livros e versículos no banco
-atual (local ou Turso, conforme o ambiente). A tabela de origem precisa ter
-`book_id`, `chapter`, `number` e `text`.
+O importador lê `data/source/almeida-livre.sqlite` e grava livros e versículos.
+A tabela de origem precisa ter `book_id`, `chapter`, `number` e `text`.
 
 ## Redefinir o administrador
 
@@ -117,7 +103,7 @@ npm run admin:reset
 Usa `ADMIN_EMAIL`, `ADMIN_PASSWORD` e `ADMIN_NAME` do `.env`, encerra as sessões antigas
 e registra a ação na auditoria.
 
-## Recomeçar do zero (local)
+## Recomeçar do zero
 
 > Isso apaga artigos, configurações, mídia e inscritos.
 
@@ -130,10 +116,18 @@ npm run db:setup
 
 ## Backup
 
-- **SQLite local:** copie `data/app.db` com o servidor parado (ou use `sqlite3 .backup`).
-- **Turso:** use o painel/CLI para exportar ou o script de migração reversa.
-- **Uploads:** copie `data/uploads` ou exporte do Vercel Blob.
-- **Configuração:** guarde o `.env` em local seguro.
+Com o servidor parado, copie:
+
+- `data/app.db`
+- `data/app.db-wal` e `data/app.db-shm` (se existirem)
+- `data/uploads/`
+- `.env`
+
+Ou use o backup consistente:
+
+```bash
+sqlite3 data/app.db ".backup 'backups/app-2026-11-24.db'"
+```
 
 Detalhes em [backup-e-recuperacao.md](backup-e-recuperacao.md).
 

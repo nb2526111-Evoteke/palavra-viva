@@ -24,10 +24,6 @@ data/uploads/*
 public/uploads/*
 !public/uploads/.gitkeep
 
-# Plataformas
-.vercel
-.netlify
-
 # Logs e temporários
 *.log
 *.tsbuildinfo

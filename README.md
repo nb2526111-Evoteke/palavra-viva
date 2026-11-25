@@ -24,6 +24,9 @@ O Palavra Viva reúne, em um único projeto:
 - gerador de artigos a partir de um tema ou passagem bíblica;
 - painel administrativo com artigos, comentários, mídia, newsletter e auditoria.
 
+Tudo roda em um único servidor Node.js, com **SQLite** e **uploads em disco**.
+Não há dependência de banco ou storage externo.
+
 O acesso administrativo é exclusivo: **não existe cadastro público**.
 
 ## Stack
@@ -31,10 +34,9 @@ O acesso administrativo é exclusivo: **não existe cadastro público**.
 - **Next.js 16** (App Router, Server Components, Server Actions)
 - **React 19** + **TypeScript**
 - **Tailwind CSS 4**
-- **SQLite/libSQL** local e **Turso** em produção
-- **Vercel Blob** para uploads em produção
-- **Vercel** para deploy gratuito
-- **PM2 + Nginx** como alternativa em VPS
+- **SQLite** via `node:sqlite`
+- **Node.js 22.13+**
+- **PM2 + Nginx** para publicação em VPS (opcional)
 
 ## Funcionalidades
 
@@ -117,7 +119,6 @@ Use o e-mail e a senha definidos em `ADMIN_EMAIL` e `ADMIN_PASSWORD`.
 | `npm start` | Sobe a versão de produção. |
 | `npm run typecheck` | Verifica TypeScript sem gerar arquivos. |
 | `npm run db:setup` | Cria o schema, o conteúdo inicial e importa a Bíblia. |
-| `npm run db:migrate` | Copia o SQLite local para o Turso. |
 | `npm run bible:import` | Reimporta a Bíblia. |
 | `npm run admin:reset` | Redefine o administrador e encerra sessões. |
 
@@ -132,7 +133,7 @@ Use o e-mail e a senha definidos em `ADMIN_EMAIL` e `ADMIN_PASSWORD`.
 ├─ docs/                 # documentação técnica e operacional
 ├─ public/
 │  └─ images/temas/      # capas dos temas
-├─ scripts/              # setup, importação, migração e reset
+├─ scripts/              # setup, importação, reset e utilitários
 ├─ src/
 │  ├─ app/               # páginas, painel, API e uploads
 │  ├─ components/        # UI pública, admin e bíblia
@@ -149,9 +150,8 @@ Use o e-mail e a senha definidos em `ADMIN_EMAIL` e `ADMIN_PASSWORD`.
 | Documento | Conteúdo |
 | --- | --- |
 | [Arquitetura](docs/arquitetura.md) | Como o site, o banco, a autenticação e os uploads funcionam. |
-| [Banco de dados](docs/banco-de-dados.md) | Schema, tabelas, Turso, migrações e backup. |
-| [Implantação na Vercel](docs/implantacao-vercel.md) | Vercel + Turso + Vercel Blob, grátis. |
-| [Implantação em VPS](docs/implantacao-vps.md) | Node, PM2, Nginx, HTTPS e SQLite. |
+| [Banco de dados](docs/banco-de-dados.md) | Schema, tabelas, inicialização e backup. |
+| [Publicação em VPS](docs/implantacao-vps.md) | Node, PM2, Nginx, HTTPS e SQLite. |
 | [Painel administrativo](docs/painel-administrativo.md) | Como operar o blog. |
 | [Geradores de conteúdo](docs/geradores-de-conteudo.md) | Temas e artigos alinhados à passagem. |
 | [Segurança](docs/seguranca.md) | Sessões, uploads, cabeçalhos e checklist. |
@@ -159,21 +159,9 @@ Use o e-mail e a senha definidos em `ADMIN_EMAIL` e `ADMIN_PASSWORD`.
 | [Desenvolvimento](docs/desenvolvimento.md) | Convenções e como estender o projeto. |
 | [Bíblia e licenças](docs/biblia-e-licencas.md) | Fonte, importação e atribuição. |
 
-## Implantação
+## Publicação
 
-### Vercel (recomendado para começar de graça)
-
-1. Crie o banco no [Turso](https://app.turso.tech).
-2. Salve `.env.turso` e rode `npm run db:migrate`.
-3. Importe o repositório na [Vercel](https://vercel.com/new).
-4. Crie um **Blob store** e conecte ao projeto.
-5. Configure as variáveis de ambiente e faça o deploy.
-
-Passo a passo completo: [docs/implantacao-vercel.md](docs/implantacao-vercel.md).
-
-### VPS com disco persistente
-
-Para manter SQLite e uploads em disco:
+O projeto é feito para rodar em um servidor Node.js com disco persistente:
 
 ```bash
 npm ci
@@ -182,10 +170,14 @@ npm run build
 npm start
 ```
 
-Com PM2 e Nginx: [docs/implantacao-vps.md](docs/implantacao-vps.md).
+Em produção:
 
-> Plataformas serverless não mantêm disco persistente. Por isso a Vercel usa Turso
-> e Vercel Blob; o SQLite local é apenas para desenvolvimento ou VPS.
+- use HTTPS e um proxy reverso (Nginx/Caddy);
+- mantenha `data/` e `.env` fora do Git;
+- faça backup de `data/app.db` e `data/uploads`;
+- rode com PM2, systemd ou Docker.
+
+Guia completo: [docs/implantacao-vps.md](docs/implantacao-vps.md).
 
 ## Segurança
 
@@ -198,7 +190,7 @@ Com PM2 e Nginx: [docs/implantacao-vps.md](docs/implantacao-vps.md).
 - Uploads com validação de tipo e tamanho.
 - Cabeçalhos de segurança no `next.config.ts`.
 
-Nunca commite `.env`, `.env.turso`, `data/app.db` ou uploads.
+Nunca commite `.env`, `data/app.db` ou uploads.
 Leia [docs/seguranca.md](docs/seguranca.md).
 
 ## Bíblia e licenças

@@ -1,7 +1,7 @@
 # Implantação em VPS
 
 Guia para rodar o Palavra Viva com **SQLite e uploads em disco persistente**.
-Recomendado para quem quer controle total e não depende de cotas serverless.
+Recomendado para quem quer controle total sobre o banco e os uploads.
 
 ## Requisitos
 

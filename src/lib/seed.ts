@@ -1,4 +1,4 @@
-import type { Client, InValue } from "@libsql/client";
+import type { DatabaseSync } from "node:sqlite";
 import { hashPassword } from "./password";
 import { THEME_PRESETS } from "./themes";
 import {
@@ -49,16 +49,15 @@ function dayKey(offset: number) {
   return date.toISOString().slice(0, 10);
 }
 
-export async function seedDatabase(client: Client) {
-  const seeded = await client.execute({
-    sql: "SELECT value FROM settings WHERE key = 'seeded'",
-    args: [],
-  });
-  if (seeded.rows[0]?.value === "1") return;
+export function seedDatabase(db: DatabaseSync) {
+  const seeded = db.prepare("SELECT value FROM settings WHERE key = 'seeded'").get() as
+    | { value: string }
+    | undefined;
+  if (seeded?.value === "1") return;
 
-  const existingUsers = await client.execute("SELECT COUNT(*) AS total FROM users");
-  if (Number(existingUsers.rows[0]?.total ?? 0) > 0) {
-    await client.execute("INSERT OR REPLACE INTO settings (key, value) VALUES ('seeded', '1')");
+  const existingUsers = db.prepare("SELECT COUNT(*) AS total FROM users").get() as { total: number };
+  if (existingUsers.total > 0) {
+    db.prepare("INSERT OR REPLACE INTO settings (key, value) VALUES ('seeded', '1')").run();
     return;
   }
 
@@ -66,160 +65,166 @@ export async function seedDatabase(client: Client) {
   const adminPassword = process.env.ADMIN_PASSWORD || "troque-esta-senha-agora";
   const adminName = process.env.ADMIN_NAME?.trim() || "Administrador";
 
-  const tx = await client.transaction("write");
+  db.exec("BEGIN IMMEDIATE");
   try {
-    const recheck = await tx.execute({
-      sql: "SELECT value FROM settings WHERE key = 'seeded'",
-      args: [],
-    });
-    if (recheck.rows[0]?.value === "1") {
-      await tx.commit();
+    const recheck = db.prepare("SELECT value FROM settings WHERE key = 'seeded'").get() as
+      | { value: string }
+      | undefined;
+    if (recheck?.value === "1") {
+      db.exec("COMMIT");
       return;
     }
 
-    const run = (sql: string, args: InValue[] = []) => tx.execute({ sql, args });
-
+    const insertSetting = db.prepare("INSERT OR REPLACE INTO settings (key, value) VALUES (?, ?)");
     for (const [key, value] of Object.entries(SITE_SETTINGS)) {
-      await run("INSERT OR REPLACE INTO settings (key, value) VALUES (?, ?)", [key, value]);
+      insertSetting.run(key, value);
     }
 
-    await run(
+    db.prepare(
       `INSERT INTO users (name, email, password_hash, role, bio)
        VALUES (?, ?, ?, 'admin', ?)`,
-      [
-        adminName,
-        adminEmail,
-        hashPassword(adminPassword),
-        "Leitor da Bíblia, editor do Palavra Viva. Escreve sobre fé, cultura e as pequenas decisões que formam uma vida.",
-      ],
+    ).run(
+      adminName,
+      adminEmail,
+      hashPassword(adminPassword),
+      "Leitor da Bíblia, editor do Palavra Viva. Escreve sobre fé, cultura e as pequenas decisões que formam uma vida.",
     );
 
-    for (const preset of THEME_PRESETS) {
-      await run(
-        `INSERT INTO themes (name, slug, description, mode, tokens, is_default)
-         VALUES (?, ?, ?, ?, ?, ?)`,
-        [
-          preset.name,
-          preset.slug,
-          preset.description,
-          preset.mode,
-          JSON.stringify(preset.tokens),
-          preset.slug === SITE_SETTINGS.default_theme ? 1 : 0,
-        ],
+    const insertTheme = db.prepare(
+      `INSERT INTO themes (name, slug, description, mode, tokens, is_default)
+       VALUES (?, ?, ?, ?, ?, ?)`,
+    );
+    THEME_PRESETS.forEach((preset) => {
+      insertTheme.run(
+        preset.name,
+        preset.slug,
+        preset.description,
+        preset.mode,
+        JSON.stringify(preset.tokens),
+        preset.slug === SITE_SETTINGS.default_theme ? 1 : 0,
       );
-    }
+    });
 
+    const insertCategory = db.prepare(
+      "INSERT INTO categories (name, slug, description, color, icon) VALUES (?, ?, ?, ?, ?)",
+    );
     const categoryIds = new Map<string, number>();
     for (const category of DEMO_CATEGORIES) {
-      const result = await run(
-        "INSERT INTO categories (name, slug, description, color, icon) VALUES (?, ?, ?, ?, ?)",
-        [category.name, category.slug, category.description, category.color, category.icon],
+      const result = insertCategory.run(
+        category.name,
+        category.slug,
+        category.description,
+        category.color,
+        category.icon,
       );
       categoryIds.set(category.slug, Number(result.lastInsertRowid));
     }
 
+    const insertTag = db.prepare("INSERT OR IGNORE INTO tags (name, slug) VALUES (?, ?)");
+    const getTag = db.prepare("SELECT id FROM tags WHERE slug = ?");
+    const insertPost = db.prepare(
+      `INSERT INTO posts
+        (slug, title, subtitle, excerpt, content, category_id, author_id, status, featured,
+         views, reading_minutes, seo_title, seo_description, published_at, created_at, updated_at)
+       VALUES (?, ?, ?, ?, ?, ?, 1, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+    );
+    const insertPostTag = db.prepare("INSERT OR IGNORE INTO post_tags (post_id, tag_id) VALUES (?, ?)");
     const postIds = new Map<string, number>();
-    for (const post of DEMO_POSTS) {
+
+    DEMO_POSTS.forEach((post) => {
       const status = post.status || "published";
       const createdAt = post.published_at ? post.published_at : daysAgo(2);
-      const result = await run(
-        `INSERT INTO posts
-          (slug, title, subtitle, excerpt, content, category_id, author_id, status, featured,
-           views, reading_minutes, seo_title, seo_description, published_at, created_at, updated_at)
-         VALUES (?, ?, ?, ?, ?, ?, 1, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-        [
-          post.slug,
-          post.title,
-          post.subtitle,
-          post.excerpt,
-          post.content,
-          categoryIds.get(post.category) ?? null,
-          status,
-          post.featured ? 1 : 0,
-          post.views,
-          readingTime(post.content),
-          post.title,
-          post.excerpt,
-          post.published_at,
-          createdAt,
-          post.published_at ?? daysAgo(1),
-        ],
+      const result = insertPost.run(
+        post.slug,
+        post.title,
+        post.subtitle,
+        post.excerpt,
+        post.content,
+        categoryIds.get(post.category) ?? null,
+        status,
+        post.featured ? 1 : 0,
+        post.views,
+        readingTime(post.content),
+        post.title,
+        post.excerpt,
+        post.published_at,
+        createdAt,
+        post.published_at ?? daysAgo(1),
       );
       const postId = Number(result.lastInsertRowid);
       postIds.set(post.slug, postId);
-
       for (const tag of post.tags) {
-        const slug = slugify(tag);
-        await run("INSERT OR IGNORE INTO tags (name, slug) VALUES (?, ?)", [tag, slug]);
-        const tagRow = await run("SELECT id FROM tags WHERE slug = ?", [slug]);
-        if (tagRow.rows[0]?.id != null) {
-          await run("INSERT OR IGNORE INTO post_tags (post_id, tag_id) VALUES (?, ?)", [
-            postId,
-            Number(tagRow.rows[0].id),
-          ]);
-        }
+        insertTag.run(tag, slugify(tag));
+        const tagRow = getTag.get(slugify(tag)) as { id: number };
+        insertPostTag.run(postId, tagRow.id);
       }
-    }
+    });
 
+    const insertComment = db.prepare(
+      `INSERT INTO comments (post_id, name, email, content, status, ip, created_at)
+       VALUES (?, ?, ?, ?, ?, '', ?)`,
+    );
     for (const comment of DEMO_COMMENTS) {
       const postId = postIds.get(comment.post);
       if (!postId) continue;
-      await run(
-        `INSERT INTO comments (post_id, name, email, content, status, ip, created_at)
-         VALUES (?, ?, ?, ?, ?, '', ?)`,
-        [postId, comment.name, comment.email, comment.content, comment.status, daysAgo(comment.daysAgo, 14)],
+      insertComment.run(
+        postId,
+        comment.name,
+        comment.email,
+        comment.content,
+        comment.status,
+        daysAgo(comment.daysAgo, 14),
       );
     }
 
-    for (let index = 0; index < DEMO_LIBRARY.length; index += 1) {
-      const item = DEMO_LIBRARY[index];
-      await run(
-        `INSERT INTO library_items
-          (slug, title, subtitle, author, type, description, pages, featured, published_at)
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-        [
-          item.slug,
-          item.title,
-          item.subtitle,
-          item.author,
-          item.type,
-          item.description,
-          item.pages,
-          item.featured ? 1 : 0,
-          daysAgo(20 + index * 9),
-        ],
+    const insertLibrary = db.prepare(
+      `INSERT INTO library_items
+        (slug, title, subtitle, author, type, description, pages, featured, published_at)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+    );
+    DEMO_LIBRARY.forEach((item, index) => {
+      insertLibrary.run(
+        item.slug,
+        item.title,
+        item.subtitle,
+        item.author,
+        item.type,
+        item.description,
+        item.pages,
+        item.featured ? 1 : 0,
+        daysAgo(20 + index * 9),
       );
-    }
+    });
 
+    const insertPlan = db.prepare(
+      `INSERT INTO reading_plans (slug, title, description, days_count, featured)
+       VALUES (?, ?, ?, ?, ?)`,
+    );
+    const insertPlanDay = db.prepare(
+      `INSERT INTO reading_plan_days (plan_id, day, title, passage, reflection)
+       VALUES (?, ?, ?, ?, ?)`,
+    );
     for (const plan of DEMO_PLANS) {
-      const result = await run(
-        `INSERT INTO reading_plans (slug, title, description, days_count, featured)
-         VALUES (?, ?, ?, ?, ?)`,
-        [plan.slug, plan.title, plan.description, plan.days.length, plan.featured ? 1 : 0],
-      );
+      const result = insertPlan.run(plan.slug, plan.title, plan.description, plan.days.length, plan.featured ? 1 : 0);
       const planId = Number(result.lastInsertRowid);
-      for (let index = 0; index < plan.days.length; index += 1) {
-        const day = plan.days[index];
-        await run(
-          `INSERT INTO reading_plan_days (plan_id, day, title, passage, reflection)
-           VALUES (?, ?, ?, ?, ?)`,
-          [planId, index + 1, day.title, day.passage, day.reflection],
-        );
-      }
+      plan.days.forEach((day, index) => {
+        insertPlanDay.run(planId, index + 1, day.title, day.passage, day.reflection);
+      });
     }
 
-    for (const verse of DEMO_DAILY_VERSES) {
-      await run("INSERT INTO daily_verses (reference, text) VALUES (?, ?)", [verse.reference, verse.text]);
-    }
+    const insertVerse = db.prepare("INSERT INTO daily_verses (reference, text) VALUES (?, ?)");
+    DEMO_DAILY_VERSES.forEach((verse) => insertVerse.run(verse.reference, verse.text));
 
-    for (let index = 0; index < DEMO_SUBSCRIBERS.length; index += 1) {
-      const subscriber = DEMO_SUBSCRIBERS[index];
-      await run(
-        "INSERT OR IGNORE INTO newsletter_subscribers (email, name, source, created_at) VALUES (?, ?, ?, ?)",
-        [subscriber.email, subscriber.name, subscriber.source, daysAgo(30 - index * 4)],
-      );
-    }
+    const insertSubscriber = db.prepare(
+      "INSERT OR IGNORE INTO newsletter_subscribers (email, name, source, created_at) VALUES (?, ?, ?, ?)",
+    );
+    DEMO_SUBSCRIBERS.forEach((subscriber, index) => {
+      insertSubscriber.run(subscriber.email, subscriber.name, subscriber.source, daysAgo(30 - index * 4));
+    });
 
+    const insertView = db.prepare(
+      "INSERT OR REPLACE INTO post_views (post_id, day, count) VALUES (?, ?, ?)",
+    );
     let postIndex = 0;
     for (const post of DEMO_POSTS) {
       if ((post.status || "published") !== "published") continue;
@@ -229,24 +234,18 @@ export async function seedDatabase(client: Client) {
       for (let offset = 29; offset >= 0; offset -= 1) {
         const base = 12 + ((postIndex * 13 + offset * 7) % 38);
         const weekendBoost = [0, 6].includes(new Date(Date.now() - offset * 86400000).getUTCDay()) ? 9 : 0;
-        await run("INSERT OR REPLACE INTO post_views (post_id, day, count) VALUES (?, ?, ?)", [
-          postId,
-          dayKey(offset),
-          base + weekendBoost,
-        ]);
+        insertView.run(postId, dayKey(offset), base + weekendBoost);
       }
     }
 
-    await run(
+    db.prepare(
       "INSERT INTO audit_logs (user_id, action, entity, details) VALUES (1, 'system.seed', 'site', 'Instalação inicial concluída')",
-    );
-    await run("INSERT OR REPLACE INTO settings (key, value) VALUES ('seeded', '1')");
+    ).run();
+    db.prepare("INSERT OR REPLACE INTO settings (key, value) VALUES ('seeded', '1')").run();
 
-    await tx.commit();
+    db.exec("COMMIT");
   } catch (error) {
-    await tx.rollback();
+    db.exec("ROLLBACK");
     throw error;
-  } finally {
-    tx.close();
   }
 }

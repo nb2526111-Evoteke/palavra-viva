@@ -51,7 +51,7 @@ A importação é idempotente: se já houver versículos, ela não duplica; use
 ## Busca
 
 A busca usa `search_text LIKE ?`, com texto normalizado. Para bases muito maiores,
-considere FTS5 (SQLite) ou índice de texto no Turso.
+considere FTS5 (SQLite).
 
 ## Substituir a Bíblia
 

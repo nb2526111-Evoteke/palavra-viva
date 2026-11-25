@@ -3,13 +3,16 @@
 ## Visão geral
 
 O Palavra Viva é uma aplicação **Next.js 16 (App Router)** com renderização no servidor,
-Server Components, Server Actions e um banco SQLite/libSQL. O mesmo código roda:
+Server Components, Server Actions e banco **SQLite** local. Todo o sistema roda em um
+único processo Node.js:
 
-- **localmente**, com banco em arquivo `data/app.db` e uploads em `data/uploads`;
-- **na Vercel**, com banco no **Turso** e uploads no **Vercel Blob**;
-- **em uma VPS**, com SQLite e uploads em disco persistente.
+- site público;
+- painel administrativo;
+- banco `data/app.db`;
+- uploads em `data/uploads`.
 
-A escolha é feita por variáveis de ambiente, sem duas bases de código.
+Não há banco ou storage externo. O projeto foi desenhado para rodar em uma máquina
+local ou em uma VPS com disco persistente.
 
 ## Camadas
 
@@ -21,9 +24,9 @@ Navegador
    └─ formulários públicos (Server Actions)
           │
           ▼
-src/lib/queries.ts  ──►  src/lib/db.ts  ──►  libSQL local ou Turso
+src/lib/queries.ts  ──►  src/lib/db.ts  ──►  SQLite (node:sqlite)
 src/lib/auth.ts     ──►  sessões no banco + cookie HMAC
-src/lib/uploads.ts  ──►  src/lib/storage.ts  ──►  disco local ou Vercel Blob
+src/lib/uploads.ts  ──►  src/lib/storage.ts  ──►  data/uploads
 ```
 
 ### Interface
@@ -35,8 +38,10 @@ src/lib/uploads.ts  ──►  src/lib/storage.ts  ──►  disco local ou Ver
 
 ### Dados
 
-- `src/lib/db.ts` expõe `queryAll`, `queryOne`, `execute`, `insert` e `transaction`.
-- Todas as operações são assíncronas para funcionar em serverless.
+- `src/lib/db.ts` abre o SQLite, aplica o schema, executa o seed e expõe
+  `queryAll`, `queryOne`, `execute`, `insert` e `transaction`.
+- As funções são assíncronas para manter a mesma interface nas páginas e ações,
+  embora o SQLite execute de forma síncrona.
 - `src/lib/queries.ts` centraliza as consultas de leitura e algumas escritas.
 - `src/lib/actions/*` concentra as Server Actions administrativas e públicas.
 - O schema fica em `src/lib/schema.ts` e é aplicado com `CREATE TABLE IF NOT EXISTS`.
@@ -53,9 +58,7 @@ src/lib/uploads.ts  ──►  src/lib/storage.ts  ──►  disco local ou Ver
 ### Uploads
 
 - `src/lib/uploads.ts` valida tipo/tamanho e grava o registro na tabela `media`.
-- `src/lib/storage.ts` escolhe o destino:
-  - `BLOB_READ_WRITE_TOKEN` ou `BLOB_STORE_ID` → Vercel Blob;
-  - caso contrário → `data/uploads`.
+- `src/lib/storage.ts` grava e lê arquivos em `data/uploads`.
 - A rota `/uploads/[...path]` entrega o arquivo com `Content-Type` e cache longo.
 
 ### Conteúdo e geradores
@@ -69,8 +72,8 @@ src/lib/uploads.ts  ──►  src/lib/storage.ts  ──►  disco local ou Ver
 ## Fluxo de uma página pública
 
 1. O Server Component chama funções de `src/lib/queries.ts`.
-2. `db.ts` garante o schema (e o seed, no banco local vazio).
-3. A consulta é executada no SQLite local ou no Turso.
+2. `db.ts` abre o SQLite, aplica o schema e faz o seed se o banco estiver vazio.
+3. A consulta é executada localmente.
 4. O HTML é renderizado no servidor e enviado ao navegador.
 5. Componentes interativos (menu, leitor da Bíblia, formulários) hidratam no cliente.
 
@@ -84,18 +87,17 @@ src/lib/uploads.ts  ──►  src/lib/storage.ts  ──►  disco local ou Ver
 
 ## Decisões importantes
 
-- **SQLite/libSQL** em vez de um ORM: consultas explícitas, schema legível e facilidade
-  de migrar entre arquivo local e Turso.
+- **SQLite** em vez de um banco externo: simplicidade, backup por arquivo e zero custo.
+- **node:sqlite** em vez de ORM: consultas explícitas e schema legível.
 - **Server Actions** em vez de uma API REST separada: menos código e validação no servidor.
-- **Vercel Blob** em vez de disco em produção: funções serverless não têm disco persistente.
-- **Turso** em vez de Postgres: mantém o dialeto SQLite e simplifica a migração.
+- **Uploads em disco**: simples de operar, desde que haja backup e disco persistente.
 - **Sem cadastro público**: reduz superfície de ataque e mantém o blog editorial.
 - **Tema por cookie**: cada visitante escolhe sua atmosfera de leitura sem conta.
 
 ## Limitações conhecidas
 
-- Funções serverless têm limite de payload (4,5 MB neste projeto).
-- O plano gratuito da Vercel e do Turso tem cotas mensais.
-- Não há migrations versionadas; o schema é idempotente e evoluções devem ser compatíveis.
+- O SQLite não é indicado para múltiplas instâncias concorrentes de escrita.
+- O rate limiting é em memória por processo.
 - A busca bíblica usa `LIKE`; para acervos muito maiores, considere FTS.
-- O rate limiting é em memória por instância; em escala, use um store compartilhado.
+- Não há migrations versionadas; o schema é idempotente e evoluções devem ser compatíveis.
+- O servidor precisa de disco persistente; ambientes serverless não servem para este modelo.

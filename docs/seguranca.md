@@ -36,11 +36,10 @@
 ## Uploads
 
 - Tipos permitidos: imagens, PDF, MP3, M4A, OGG, MP4 e TXT.
-- Limite local: 8 MB por arquivo.
-- Limite em produção serverless: 4,5 MB por envio.
+- Limite: 8 MB por arquivo.
 - Nome gerado com timestamp + random + slug; extensão validada.
-- Entrega por rota controlada `/uploads/[...path]`, com `Content-Type` e cache.
-- No Vercel Blob, o arquivo é público; não envie documentos sensíveis.
+- Entrega pela rota `/uploads/[...path]`, com `Content-Type` e cache.
+- Arquivos ficam em `data/uploads`, fora de `public/`.
 
 ## Cabeçalhos
 
@@ -56,12 +55,11 @@
 Nunca commite:
 
 - `.env`
-- `.env.turso`
-- tokens do Turso/Vercel
 - `data/app.db`
-- uploads de usuários
+- `data/uploads/`
+- qualquer token ou senha
 
-Use o `.env.example` como modelo. Em produção, configure no painel da Vercel.
+Use o `.env.example` como modelo.
 
 ## Checklist antes de publicar
 
@@ -69,22 +67,20 @@ Use o `.env.example` como modelo. Em produção, configure no painel da Vercel.
 - [ ] `SESSION_SECRET` gerado com `openssl rand -hex 32`.
 - [ ] `SITE_URL` com `https://`.
 - [ ] HTTPS ativo.
-- [ ] Repositório privado ou sem segredos.
-- [ ] Blob store conectado e com escopo correto.
-- [ ] Token do Turso com permissão de leitura/escrita.
+- [ ] Repositório sem segredos.
 - [ ] Backup do banco e uploads.
+- [ ] Permissão de escrita apenas em `data/`.
 - [ ] Login testado e senha inicial trocada.
 
 ## Rate limiting em escala
 
-O limite atual é por processo (memória). Em várias instâncias serverless, cada uma tem
-seu próprio contador. Para escala maior, use um store compartilhado (Upstash Redis,
-Vercel KV ou tabela no banco) com janela deslizante.
+O limite atual é por processo (memória). Em várias instâncias, cada uma tem seu próprio
+contador. Para escala maior, use um store compartilhado (Redis) ou uma tabela no banco
+com janela deslizante.
 
 ## Resposta a incidentes
 
 1. Troque a senha do administrador.
-2. Gere novo `SESSION_SECRET` e reinicie/redeploy (invalida sessões).
-3. Gere novo token no Turso e atualize a Vercel.
-4. Revise `audit_logs` e logs do provedor.
-5. Se um segredo entrou no Git, considere-o comprometido e remova do histórico.
+2. Gere novo `SESSION_SECRET` e reinicie o site (invalida sessões).
+3. Revise `audit_logs` e os logs do servidor.
+4. Se um segredo entrou no Git, considere-o comprometido e remova do histórico.

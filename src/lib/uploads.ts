@@ -49,7 +49,7 @@ export async function saveUpload(file: File, alt = ""): Promise<UploadResult> {
   const base = slugify(originalName.replace(/\.[^.]+$/, "")) || "arquivo";
   const filename = `${Date.now()}-${randomBytes(4).toString("hex")}-${base}.${extension}`;
   const buffer = new Uint8Array(await file.arrayBuffer());
-  await putUploadFile(filename, buffer, mime);
+  await putUploadFile(filename, buffer);
 
   const id = await insert(
     "INSERT INTO media (filename, original_name, mime, size, alt) VALUES (?, ?, ?, ?, ?)",

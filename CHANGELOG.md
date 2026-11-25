@@ -7,25 +7,21 @@ O formato segue [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/).
 
 ### Adicionado
 
-- Suporte a banco remoto libSQL/Turso com o mesmo schema SQLite.
-- Suporte a uploads no Vercel Blob em produção, mantendo o disco local em desenvolvimento.
-- Documentação separada de arquitetura, banco, segurança, backup e implantação.
-- CI no GitHub Actions com typecheck, preparação do banco e build.
-- Templates de issue, Pull Request, Dependabot e política de segurança.
+- Estrutura de repositório GitHub com CI, Dependabot, templates de issue e Pull Request.
+- Documentação separada de arquitetura, banco, segurança, backup, desenvolvimento e publicação.
 - Licença MIT para o código e créditos de terceiros.
+- `npm run typecheck` para validação de TypeScript.
 
 ### Alterado
 
-- Camada de banco convertida para operações assíncronas compatíveis com serverless.
-- Scripts de setup, importação da Bíblia, reset de administrador e migração para Turso.
 - README reorganizado para o GitHub.
-- Limite de upload padronizado em 4,5 MB em produção.
+- Scripts de setup, importação da Bíblia e reset de administrador revisados.
+- `.gitignore` cobre `.env`, banco local, uploads e artefatos de build.
 
 ### Removido
 
-- Configurações específicas de Netlify e Discloud.
+- Configurações e documentação de plataformas de nuvem.
 - Scripts temporários de teste e QR Code de acesso local.
-- Dependência `@netlify/blobs`.
 
 ## [1.0.0] - 2026-11-24
 

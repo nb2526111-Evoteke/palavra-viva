@@ -25,7 +25,6 @@ npm run dev
 | `npm start` | Servidor de produção. |
 | `npm run typecheck` | TypeScript sem emitir arquivos. |
 | `npm run db:setup` | Schema + seed + importação da Bíblia. |
-| `npm run db:migrate` | Copia o SQLite local para o Turso. |
 | `npm run bible:import` | Reimporta a Bíblia. |
 | `npm run admin:reset` | Redefine o administrador. |
 
@@ -49,7 +48,7 @@ src/
    ├─ queries.ts       # consultas
    ├─ schema.ts        # schema SQLite
    ├─ uploads.ts       # upload e mídia
-   ├─ storage.ts       # disco ou Vercel Blob
+   ├─ storage.ts       # leitura/escrita em data/uploads
    ├─ theme-generator.ts
    ├─ reference-theme.ts
    └─ article-generator.ts
@@ -115,10 +114,10 @@ export async function minhaAction(formData: FormData) {
 ## Banco
 
 - O schema é idempotente em `src/lib/schema.ts`.
-- `db.ts` usa libSQL local (`file:data/app.db`) ou Turso (`TURSO_DATABASE_URL`).
+- `db.ts` usa `node:sqlite` com o arquivo `data/app.db`.
 - Não há ORM nem migrations versionadas.
 - Mudanças devem funcionar em banco vazio e populado.
-- Teste com `npm run db:setup` e com `npm run db:migrate` (Turso).
+- Teste com `npm run db:setup` em uma cópia limpa do projeto.
 
 ## Testes manuais recomendados
 
@@ -140,7 +139,7 @@ Antes de abrir um PR:
   prefira o editor/Node com UTF-8.
 - Preserve `\n` (LF) conforme `.editorconfig`.
 
-## Deploy
+## Publicação
 
-- Vercel: ver [implantacao-vercel.md](implantacao-vercel.md).
-- VPS: ver [implantacao-vps.md](implantacao-vps.md).
+- VPS com Node, PM2 e Nginx: ver [implantacao-vps.md](implantacao-vps.md).
+- O projeto precisa de disco persistente para o SQLite e os uploads.

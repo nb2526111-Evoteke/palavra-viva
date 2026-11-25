@@ -13,14 +13,11 @@
     "start": "next start",
     "typecheck": "tsc --noEmit",
     "db:setup": "tsx scripts/setup.ts",
-    "db:migrate": "tsx scripts/migrate-to-turso.ts",
     "bible:import": "tsx scripts/import-bible.ts",
     "admin:reset": "tsx scripts/reset-admin.ts"
   },
   "dependencies": {
-    "@libsql/client": "^0.18.0",
     "@tailwindcss/typography": "^0.5.19",
-    "@vercel/blob": "^2.9.0",
     "clsx": "^2.1.1",
     "lucide-react": "^1.77.0",
     "marked": "^18.2.1",
