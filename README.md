@@ -65,6 +65,24 @@ O acesso administrativo é exclusivo: **não existe cadastro público**.
 - Newsletter com CSV, mensagens de contato e auditoria.
 - Configurações do site, perfil e troca de senha.
 
+## Abrir no GitHub Codespaces
+
+O Codespaces roda o blog completo na nuvem do GitHub, com SQLite e uploads dentro do
+ambiente. É a forma de acessar o projeto pelo GitHub sem instalar nada no computador.
+
+[![Open in GitHub Codespaces](https://github.com/codespaces/badge.svg)](https://codespaces.new/nb2526111-Evoteke/palavra-viva)
+
+1. Clique no botão acima e crie o Codespace.
+2. Aguarde a instalação e a importação da Bíblia (1–2 minutos).
+3. Abra o arquivo `CREDENCIAIS-CODESPACE.txt` para ver e-mail e senha do administrador.
+4. A porta 3000 abre automaticamente. Se não abrir, use a aba **Ports** e clique no
+   endereço da porta 3000.
+5. Acesse `/admin` e entre com as credenciais do arquivo.
+
+> O Codespaces é **temporário** e usa a cota gratuita do GitHub. O banco e os uploads
+> ficam dentro do Codespace e são perdidos se ele for excluído. Para um site público
+> permanente, é necessário um servidor com disco persistente (VPS).
+
 ## Começando
 
 ### Requisitos

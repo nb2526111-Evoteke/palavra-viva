@@ -14,6 +14,9 @@ dist/
 .env.*
 !.env.example
 
+# Credenciais geradas no Codespace
+CREDENCIAIS-CODESPACE.txt
+
 # Banco local e uploads
 data/app.db
 data/app.db-*

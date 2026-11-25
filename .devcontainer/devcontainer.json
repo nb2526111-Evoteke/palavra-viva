@@ -1,0 +1,27 @@
+{
+  "name": "Palavra Viva",
+  "image": "mcr.microsoft.com/devcontainers/javascript-node:22",
+  "features": {
+    "ghcr.io/devcontainers/features/github-cli:1": {}
+  },
+  "containerEnv": {
+    "NEXT_TELEMETRY_DISABLED": "1"
+  },
+  "postCreateCommand": "bash scripts/codespace-setup.sh",
+  "postStartCommand": "pkill -f 'next dev' 2>/dev/null || true; nohup npm run dev -- -H 0.0.0.0 > /tmp/palavra-viva-dev.log 2>&1 &",
+  "forwardPorts": [3000],
+  "portsAttributes": {
+    "3000": {
+      "label": "Palavra Viva",
+      "onAutoForward": "openBrowser"
+    }
+  },
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "bradlc.vscode-tailwindcss",
+        "dbaeumer.vscode-eslint"
+      ]
+    }
+  }
+}
