@@ -8,6 +8,7 @@ geradores de estudos e um painel administrativo privado.
 [![Next.js](https://img.shields.io/badge/Next.js-16.4-000000?logo=nextdotjs)](https://nextjs.org)
 [![React](https://img.shields.io/badge/React-19-61DAFB?logo=react&logoColor=000)](https://react.dev)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.9-3178C6?logo=typescript&logoColor=fff)](https://www.typescriptlang.org)
+[![CI](https://github.com/nb2526111-Evoteke/palavra-viva/actions/workflows/ci.yml/badge.svg)](https://github.com/nb2526111-Evoteke/palavra-viva/actions/workflows/ci.yml)
 [![License](https://img.shields.io/badge/licen%C3%A7a-MIT-2ea44f)](LICENSE)
 
 ---
