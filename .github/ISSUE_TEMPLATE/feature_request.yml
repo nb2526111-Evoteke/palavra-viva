@@ -1,0 +1,37 @@
+name: "Sugerir uma melhoria"
+description: "Proponha uma nova funcionalidade ou melhoria de experiência."
+title: "[Melhoria]: "
+labels: ["enhancement"]
+body:
+  - type: textarea
+    id: problema
+    attributes:
+      label: "Qual problema isso resolve?"
+      description: "Explique a necessidade ou dificuldade atual."
+    validations:
+      required: true
+  - type: textarea
+    id: proposta
+    attributes:
+      label: "Solução proposta"
+    validations:
+      required: true
+  - type: textarea
+    id: alternativas
+    attributes:
+      label: "Alternativas consideradas"
+  - type: dropdown
+    id: area
+    attributes:
+      label: "Área"
+      options:
+        - "Site público"
+        - "Painel administrativo"
+        - "Bíblia"
+        - "Geradores de conteúdo"
+        - "Biblioteca e planos"
+        - "Newsletter e comentários"
+        - "Infraestrutura e deploy"
+        - "Documentação"
+    validations:
+      required: true

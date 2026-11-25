@@ -1,0 +1,24 @@
+import { loadEnv } from "./lib/env";
+import { importBible } from "./lib/import-bible";
+
+loadEnv();
+
+async function main() {
+  const result = await importBible({ force: true });
+  console.log("");
+  console.log("  Bíblia importada com sucesso.");
+  console.log(`  Livros:     ${result.books}`);
+  console.log(`  Versículos: ${result.verses.toLocaleString("pt-BR")}`);
+  console.log(`  Origem:     ${result.source}`);
+  console.log("");
+  console.log("  Abra /biblia no site para conferir.");
+  console.log("");
+}
+
+main().catch((error) => {
+  console.error("");
+  console.error("  Não foi possível importar a Bíblia.");
+  console.error(`  ${error instanceof Error ? error.message : String(error)}`);
+  console.error("");
+  process.exitCode = 1;
+});

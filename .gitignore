@@ -1,0 +1,44 @@
+# Dependências
+node_modules/
+.pnp
+.pnp.*
+
+# Build do Next.js
+.next/
+out/
+build/
+dist/
+
+# Ambiente e segredos
+.env
+.env.*
+!.env.example
+
+# Banco local e uploads
+data/app.db
+data/app.db-*
+data/uploads/*
+!data/uploads/.gitkeep
+
+# Uploads públicos legados
+public/uploads/*
+!public/uploads/.gitkeep
+
+# Plataformas
+.vercel
+.netlify
+
+# Logs e temporários
+*.log
+*.tsbuildinfo
+tmp-*
+.DS_Store
+Thumbs.db
+
+# Arquivos gerados pelo Next.js para agentes
+AGENTS.md
+
+# Editores
+.idea/
+.vscode/*
+!.vscode/extensions.json

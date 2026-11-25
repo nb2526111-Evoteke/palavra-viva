@@ -1,0 +1,43 @@
+{
+  "name": "palavra-viva",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Blog bíblico profissional com Bíblia completa, biblioteca digital, planos de leitura e painel administrativo privado.",
+  "license": "MIT",
+  "engines": {
+    "node": ">=22.13.0"
+  },
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "typecheck": "tsc --noEmit",
+    "db:setup": "tsx scripts/setup.ts",
+    "db:migrate": "tsx scripts/migrate-to-turso.ts",
+    "bible:import": "tsx scripts/import-bible.ts",
+    "admin:reset": "tsx scripts/reset-admin.ts"
+  },
+  "dependencies": {
+    "@libsql/client": "^0.18.0",
+    "@tailwindcss/typography": "^0.5.19",
+    "@vercel/blob": "^2.9.0",
+    "clsx": "^2.1.1",
+    "lucide-react": "^1.77.0",
+    "marked": "^18.2.1",
+    "next": "16.4.6",
+    "react": "^19.2.0",
+    "react-dom": "^19.2.0",
+    "sanitize-html": "^2.18.2",
+    "zod": "^4.6.7"
+  },
+  "devDependencies": {
+    "@tailwindcss/postcss": "^4.3.5",
+    "@types/node": "^24.10.0",
+    "@types/react": "^19.2.0",
+    "@types/react-dom": "^19.2.0",
+    "@types/sanitize-html": "^2.16.0",
+    "tailwindcss": "^4.3.5",
+    "tsx": "^4.20.6",
+    "typescript": "^5.9.3"
+  }
+}

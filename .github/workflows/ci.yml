@@ -1,0 +1,46 @@
+name: CI
+
+on:
+  push:
+    branches: ["main"]
+  pull_request:
+    branches: ["main"]
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    name: Typecheck e build
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    env:
+      ADMIN_EMAIL: ci@palavraviva.local
+      ADMIN_PASSWORD: ci-password-123456
+      ADMIN_NAME: CI
+      SESSION_SECRET: ci-session-secret-change-me-1234567890
+      SITE_URL: http://localhost:3000
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Configurar Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version-file: ".nvmrc"
+          cache: "npm"
+
+      - name: Instalar dependências
+        run: npm ci
+
+      - name: Verificar TypeScript
+        run: npm run typecheck
+
+      - name: Preparar banco local e importar a Bíblia
+        run: npm run db:setup
+
+      - name: Build de produção
+        run: npm run build
