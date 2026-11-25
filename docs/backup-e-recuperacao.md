@@ -18,7 +18,16 @@ Com o servidor parado:
 Copy-Item data\app.db backups\app-$(Get-Date -Format yyyyMMdd-HHmm).db
 ```
 
-Ou com backup consistente:
+Ou use o backup consistente do projeto:
+
+```bash
+npm run db:backup
+```
+
+O arquivo é criado em `backups/app-....db`. No Codespaces, clique com o botão direito
+no arquivo e escolha **Download**.
+
+Também é possível usar o SQLite diretamente:
 
 ```bash
 sqlite3 data/app.db ".backup 'backups/app-2026-11-24.db'"

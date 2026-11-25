@@ -8,7 +8,7 @@
     "NEXT_TELEMETRY_DISABLED": "1"
   },
   "postCreateCommand": "bash scripts/codespace-setup.sh",
-  "postStartCommand": "pkill -f 'next dev' 2>/dev/null || true; nohup npm run dev -- -H 0.0.0.0 > /tmp/palavra-viva-dev.log 2>&1 &",
+  "postStartCommand": "nohup npm run dev -- -H 0.0.0.0 > /tmp/palavra-viva-dev.log 2>&1 &",
   "forwardPorts": [3000],
   "portsAttributes": {
     "3000": {

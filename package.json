@@ -13,6 +13,7 @@
     "start": "next start",
     "typecheck": "tsc --noEmit",
     "db:setup": "tsx scripts/setup.ts",
+    "db:backup": "tsx scripts/backup.ts",
     "bible:import": "tsx scripts/import-bible.ts",
     "admin:reset": "tsx scripts/reset-admin.ts"
   },

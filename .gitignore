@@ -17,6 +17,9 @@ dist/
 # Credenciais geradas no Codespace
 CREDENCIAIS-CODESPACE.txt
 
+# Backups locais
+backups/
+
 # Banco local e uploads
 data/app.db
 data/app.db-*

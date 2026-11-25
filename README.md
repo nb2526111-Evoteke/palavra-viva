@@ -79,8 +79,33 @@ ambiente. É a forma de acessar o projeto pelo GitHub sem instalar nada no compu
    endereço da porta 3000.
 5. Acesse `/admin` e entre com as credenciais do arquivo.
 
-> O Codespaces é **temporário** e usa a cota gratuita do GitHub. O banco e os uploads
-> ficam dentro do Codespace e são perdidos se ele for excluído. Para um site público
+### Banco e uploads no Codespaces
+
+- Banco: `data/app.db`
+- Uploads: `data/uploads/`
+
+Eles ficam dentro do Codespace e **persistem** ao parar, iniciar ou reconstruir o
+mesmo Codespace. São perdidos apenas se o Codespace for excluído.
+
+Para baixar uma cópia consistente do banco:
+
+```bash
+npm run db:backup
+```
+
+O arquivo é criado em `backups/app-....db`. Clique com o botão direito nele no
+explorador de arquivos e escolha **Download**.
+
+Para os uploads:
+
+```bash
+tar -czf backups/uploads-$(date +%F).tar.gz -C data uploads
+```
+
+Para usar o banco do seu computador no Codespace, pare o servidor, envie o arquivo
+`data/app.db` para `data/` no Codespace (arrastar e soltar) e inicie novamente.
+
+> O Codespaces é **temporário** e usa a cota gratuita do GitHub. Para um site público
 > permanente, é necessário um servidor com disco persistente (VPS).
 
 ## Começando
@@ -138,6 +163,7 @@ Use o e-mail e a senha definidos em `ADMIN_EMAIL` e `ADMIN_PASSWORD`.
 | `npm start` | Sobe a versão de produção. |
 | `npm run typecheck` | Verifica TypeScript sem gerar arquivos. |
 | `npm run db:setup` | Cria o schema, o conteúdo inicial e importa a Bíblia. |
+| `npm run db:backup` | Cria uma cópia consistente do banco em `backups/`. |
 | `npm run bible:import` | Reimporta a Bíblia. |
 | `npm run admin:reset` | Redefine o administrador e encerra sessões. |
 
