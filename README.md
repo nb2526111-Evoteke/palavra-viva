@@ -75,7 +75,7 @@ O acesso administrativo é exclusivo: **não existe cadastro público**.
 ### Instalação
 
 ```bash
-git clone https://github.com/SEU-USUARIO/palavra-viva.git
+git clone https://github.com/nb2526111-Evoteke/palavra-viva.git
 cd palavra-viva
 npm ci
 cp .env.example .env
